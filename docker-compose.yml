@@ -1,0 +1,49 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Tek seferlik: modelleri indirir, sonra kapanır.
+  pull-models:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["sh", "-c", "ollama pull llama3.1:8b && ollama pull nomic-embed-text"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  vulnerable:
+    build: ./app
+    command: ["node", "vulnerable/server.js"]
+    environment:
+      OLLAMA_URL: http://ollama:11434
+    ports:
+      - "3000:3000"
+    depends_on:
+      pull-models:
+        condition: service_completed_successfully
+
+  secure:
+    build: ./app
+    command: ["node", "secure/server.js"]
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      # K0: sır artık koddan ve model bağlamından ayrı.
+      ADMIN_KEY: SUPER_GIZLI_2026
+    ports:
+      - "3001:3000"
+    depends_on:
+      pull-models:
+        condition: service_completed_successfully
+
+volumes:
+  ollama:

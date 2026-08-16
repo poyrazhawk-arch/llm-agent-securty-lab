@@ -1,0 +1,10 @@
+node_modules/
+.env
+*.log
+
+# Superseded measurement runs (kept locally, not part of the published result)
+results/archive/
+results/single-run/
+
+# Özel çalışma dosyası — pazarlama/satış planı, repoda yayınlanmaz
+ai-security-showcase-plan.md

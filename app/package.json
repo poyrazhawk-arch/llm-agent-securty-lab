@@ -1,0 +1,8 @@
+{
+  "name": "llm-agent-securty-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node vulnerable/selftest.js && node secure/selftest.js"
+  }
+}
