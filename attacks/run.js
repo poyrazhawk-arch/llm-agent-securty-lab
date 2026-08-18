@@ -126,10 +126,15 @@ const resumed = [];
 if (process.env.RESUME === "1" && existsSync(new URL(`../results/${FILE}.json`, import.meta.url))) {
   const prev = JSON.parse(readFileSync(new URL(`../results/${FILE}.json`, import.meta.url), "utf8"));
   if (prev.repeat === REPEAT) {
-    resumed.push(...(prev.results || []));
+    // Geçersiz testler (hiçbir denemesi tamamlanmamış) yeniden koşulur —
+    // yoksa altyapı arızası kalıcı bir "sonuç" olarak dosyada donar.
+    const usable = (prev.results || []).filter((r) => !r.invalid);
+    const retry = (prev.results || []).length - usable.length;
+    resumed.push(...usable);
     const done = new Set(resumed.map((r) => r.id));
     TESTS = TESTS.filter((t) => !done.has(t.id));
-    console.log(`[redteam] devam: ${resumed.length} test önceki koşudan alındı, ${TESTS.length} test kaldı`);
+    console.log(`[redteam] devam: ${resumed.length} test önceki koşudan alındı` +
+      (retry ? `, ${retry} geçersiz test yeniden koşulacak` : "") + `, ${TESTS.length} test kaldı`);
   } else {
     console.log(`[redteam] önceki koşu farklı tekrar sayısıyla (${prev.repeat}) yapılmış — baştan başlanıyor`);
   }

@@ -123,13 +123,14 @@ Bunlar gerçek risk; bu lab'de savunulmadıkları için burada yazılıyor:
 
 ## 7. Kabul Edilen Risk
 
-Ölçülen sonuç: 45 testin **0'ı** savunmayı aştı (zafiyetli sürümde 34'ü aşıyordu).
+Ölçülen sonuç (45 test × 10 tekrar): savunmalı sürümde **445 denemenin 0'ı** sızdırdı.
+Zafiyetli sürümde 433 denemenin 337'si (%78) sızdırıyordu.
 Yanlış pozitif: 5 meşru iş akışında 0. Ayrıntı: `results/comparison.md`.
 
 **%0, "güvenli" demek değildir.** Yalnızca bu test setinin bu savunmayı aşamadığı anlamına
-gelir. Test setinin kendi sınırları var (§6) ve bir de bilinen ölçüm eksiği: her test
-yalnızca kendi tehdit sınıfının kriterine göre puanlanıyor, sınıf dışı sızıntılar
-sayılmıyor (`attacks/README.md`). Yani zafiyetli sürümün 34/45'i bile gerçeğin altındadır.
+gelir. Test setinin sınırları §6'da. Ayrıca ölçümün kendisi de mükemmel değil: zafiyetli
+sürümde 28 test kararsız çıktı (bazen sızdırdı, bazen sızdırmadı), yani tek koşuluk hiçbir
+sayı bu sistemin özelliği sayılamaz.
 
 Tasarım gereği kapalı olmayan iki alan şimdiden biliniyor:
 
@@ -144,4 +145,4 @@ Kabul sebebi: her iki durumda da K2 (tool yetkilendirmesi ve tenant filtresi)
 devrede kalır — bunlar modelin kararına değil uygulama koduna dayanır. Yani
 K1 aşıldığında sonuç finansal kayıp değil, en fazla bilgi sızıntısıdır.
 
-**Sıfır risk hedeflenmedi; risk sınırlandı, ölçülecek ve yazıya dökülecek.**
+**Sıfır risk hedeflenmedi; risk sınırlandı, ölçüldü ve yazıya döküldü.**

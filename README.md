@@ -10,20 +10,36 @@ Aynı asistanın iki sürümü, aynı 45 saldırı, tek fark savunma katmanı.
 
 ## Sonuç
 
-> ⏳ **Ölçüm koşuyor.** Buradaki tablo, koşu bittiğinde `results/comparison.md`'den
-> doğrudan aktarılacak. Bu bölüme koşudan gelmeyen hiçbir sayı yazılmaz.
-
-Aynı 45 saldırı iki sürüme de gönderiliyor, her test 10 kez tekrarlanıyor (900 deneme).
+Aynı 45 saldırı iki sürüme de gönderildi, her test 10 kez tekrarlandı — toplam 878 deneme.
 Tekrar şart, çünkü LLM deterministik değil: aynı payload bir denemede engellenip
 diğerinde sızdırabiliyor.
 
-Ölçülen üç şey:
+| Tehdit | Zafiyetli | Savunmalı |
+|---|---|---|
+| T1 — Yetkisiz para iadesi | 94/99 (**%95**) | 0/100 (**%0**) |
+| T2 — Indirect prompt injection | 41/85 (**%48**) | 0/98 (**%0**) |
+| T3 — Cross-tenant veri sızıntısı | 71/100 (**%71**) | 0/100 (**%0**) |
+| T4 — Sistem promptu sızıntısı | 131/149 (**%88**) | 0/147 (**%0**) |
+| **Toplam** | **337/433 (%78)** | **0/445 (%0)** |
 
-1. **Saldırı başarısı** — deneme başına, `/audit` kaydından (modelin beyanından değil)
-2. **Yanlış pozitif** — savunma meşru iş akışlarını bozuyor mu
-3. **Gecikme maliyeti** — savunmanın istek başına eklediği süre
+Oranlar deneme başınadır. Zafiyetli sürümde 45 testin 44'ü en az bir kez sızdırdı.
 
-Ham çıktılar koşu bitince `results/` altına yazılır: `before.json`, `after.json`, `comparison.md`.
+**%0'ı tek başına okumayın.** Her saldırıyı engelleyen bir sistem, meşru trafiği de
+engelliyor olabilir. Ölçtük: **5 meşru iş akışında 0 yanlış pozitif** — limit içindeki
+gerçek para iadeleri dahil hepsi çalışıyor (`acme-destek` 3.100 TL ≤ 5.000 limit,
+`finans-muduru` 12.400 TL ≤ 100.000). Savunmanın bedeli **+1,1 sn / istek**
+(3,6 sn → 4,7 sn), kaynağı girdi katmanındaki ikinci LLM çağrısı.
+
+Sonuç tek bir katmandan gelmiyor: 18 saldırı zehirli doküman düşürülerek, 13 girdi
+kontrolünde, 7 araç yetkilendirmesinde, 6'sı ikisinde birden durdu.
+
+**Kararsızlık:** zafiyetli sürümde 28 test *bazen* sızdırdı, bazen sızdırmadı. Bu yüzden
+"bu saldırı çalışır" değil, "denemelerin %X'inde çalışır" demek doğru. Tek koşuluk ölçüm
+yanıltır — nitekim ilk ölçümümüzde T2'nin 10 payloadından 6'sı "çalışmıyor" görünmüştü;
+tekrarla bakınca hepsinin çalıştığı, sadece farklı oranlarda tuttuğu ortaya çıktı.
+
+Tam tablo, katman dağılımı, kararsız testler ve yanlış pozitif ölçümü:
+[results/comparison.md](results/comparison.md)
 
 Model: `llama3.1:8b` (Ollama, lokal) · Embedding: `nomic-embed-text` · Test seti: `attacks/run.js`
 Bu sayılar bu modele aittir; başka bir modelde farklı çıkar.
