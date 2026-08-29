@@ -66,6 +66,15 @@ node app/vulnerable/server.js                  # :3000
 PORT=3001 node app/secure/server.js            # ayrı terminalde, :3001
 ```
 
+**Uzun koşulardan önce modeli belleğe sabitleyin.** Ollama boşta kalan modeli 5 dakika
+sonra bellekten atar; geri yüklemesi ~60 saniye sürer ve koşudaki istekler zaman aşımına
+düşer. Uygulama kodu her istekte `keep_alive: -1` gönderiyor, ama ilk yükleme yine de
+yavaştır — koşudan önce bir kez ısıtın:
+
+```bash
+curl -s -o /dev/null localhost:11434/api/chat -H 'content-type: application/json'   -d '{"model":"llama3.1:8b","messages":[{"role":"user","content":"test"}],"stream":false,"keep_alive":-1}'
+```
+
 ### Deneyin
 
 ```bash
