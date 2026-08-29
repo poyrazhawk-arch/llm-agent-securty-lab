@@ -93,12 +93,55 @@ export async function inputGuard(text) {
 
 // --- K1d: Doküman temizliği (T2) ---
 // Retrieval çıktısı asla system rolüne konmaz; ayrıca talimat kalıpları taşıyan
-// dokümanlar bağlamdan tamamen düşürülür.
+// bölümler dokümandan çıkarılır.
+//
+// TAKAS — bilinçli tercih:
+// İlk sürüm zehirli dokümanı KOMPLE düşürüyordu. Güvenli ama ürünü bozuyordu:
+// tedarikçi notundaki meşru bilgi de kayboluyor, asistan meşru soruya yanlış
+// cevap veriyordu ("teslimat takvimi güncellenmemiştir" — oysa güncellenmişti).
+//
+// Temizlemek atmaktan DAHA RİSKLİ: atılan doküman modele hiç ulaşmaz, temizlenen
+// ulaşır. Temizliğin eksik kaldığı her durum doğrudan modele gider. Yani savunma
+// "tamamen güvenli ama işe yaramaz" konumundan "kullanışlı ama temizleyicinin
+// kalitesine bağımlı" konumuna geçiyor.
+//
+// Riski üç şey sınırlıyor:
+//   1. Temizlik sonrası metin yeniden taranır; hâlâ sinyal varsa doküman komple
+//      düşürülür (fail closed).
+//   2. Geriye anlamlı içerik kalmazsa doküman düşürülür.
+//   3. K1d aşılsa bile K2 (araç yetkilendirmesi) arkada durur — enjeksiyon
+//      modele ulaşsa da yetkisiz bir aksiyona dönüşemez.
+// Bu yüzden takas kabul edilebilir: kaybedilen şey son savunma değil, ilk savunma.
+
+// Cümle ve satır sınırlarında böl — talimat bloğu tipik olarak ayrı cümlelerde durur.
+const SEGMENT = /(?<=[.!?])\s+|\n+/;
 
 export function sanitizeDocs(docs) {
-  const kept = [], dropped = [];
-  for (const d of docs) (signalScore(d.text) >= 1 ? dropped : kept).push(d);
-  return { kept, dropped: dropped.map((d) => d.id) };
+  const kept = [], dropped = [], sanitized = [];
+
+  for (const d of docs) {
+    if (signalScore(d.text) === 0) {
+      kept.push(d);
+      continue;
+    }
+
+    const clean = d.text
+      .split(SEGMENT)
+      .filter((seg) => seg.trim() && signalScore(seg) === 0)
+      .join(" ")
+      .trim();
+
+    // Fail closed: temizlik yetmediyse veya geriye bir şey kalmadıysa dokümanı at.
+    if (!clean || signalScore(clean) > 0) {
+      dropped.push(d.id);
+      continue;
+    }
+
+    kept.push({ ...d, text: clean });
+    sanitized.push(d.id);
+  }
+
+  return { kept, dropped, sanitized };
 }
 
 // --- K2: Yetkilendirme ---

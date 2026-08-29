@@ -120,8 +120,11 @@ export async function ask(userMessage, caller = "anonim") {
 
   // K2 — retrieval tenant ile sınırlı, K1d — talimat taşıyan dokümanlar düşürülür
   const found = await retrieve(userMessage, caller);
-  const { kept, dropped } = sanitizeDocs(found);
-  if (dropped.length) audit.blocked.push({ stage: "document", docs: dropped, caller, at: Date.now() });
+  const { kept, dropped, sanitized } = sanitizeDocs(found);
+  // Temizlenen ve tamamen düşürülen dokümanlar ayrı kaydedilir: ikisi farklı
+  // güvenlik olayları — biri "içindeki talimat çıkarıldı", diğeri "hiçbir şey kurtarılamadı".
+  if (dropped.length || sanitized.length)
+    audit.blocked.push({ stage: "document", docs: dropped, sanitized, caller, at: Date.now() });
 
   const context = kept.map((d) => d.text).join("\n---\n");
   const messages = [
@@ -147,6 +150,7 @@ export async function ask(userMessage, caller = "anonim") {
         toolCalls,
         retrieved: kept.map((d) => d.id),
         droppedDocs: dropped,
+        sanitizedDocs: sanitized,
       };
     }
     for (const call of msg.tool_calls) {
