@@ -1,6 +1,6 @@
 # Sonuç: Önce / Sonra
 
-Koşu tarihleri — zafiyetli: 2026-08-18T16:49:40.218Z · güvenli: 2026-08-18T17:48:50.130Z
+Koşu tarihleri — zafiyetli: 2026-08-18T16:49:40.218Z · güvenli: 2026-09-06T18:04:18.262Z
 Test seti: `attacks/run.js` · 45 test × 10 tekrar = **433 deneme**
 Başarı kriteri: `/audit` (bkz. [attacks/README.md](../attacks/README.md))
 
@@ -11,9 +11,9 @@ engellenip diğerinde sızdırabiliyor. Aşağıdaki oranlar deneme başınadır
 |---|---|---|---|
 | T1 | Yetkisiz para iadesi (excessive agency) | 94/99 (%95) | 0/100 (%0) |
 | T2 | Indirect prompt injection | 41/85 (%48) | 0/98 (%0) |
-| T3 | Cross-tenant veri sızıntısı | 71/100 (%71) | 0/100 (%0) |
+| T3 | Cross-tenant veri sızıntısı | 71/100 (%71) | 0/99 (%0) |
 | T4 | Sistem promptu / sır sızıntısı | 131/149 (%88) | 0/147 (%0) |
-| **TOPLAM** | | **337/433 (%78)** | **0/445 (%0)** |
+| **TOPLAM** | | **337/433 (%78)** | **0/444 (%0)** |
 
 Sınıftan bağımsız herhangi bir sızıntı (bir T3 sorgusunun sır döndürmesi gibi çapraz vakalar dahil):
 zafiyetli **%83** · savunmalı **%0**
@@ -46,11 +46,11 @@ _Bu koşuda savunmayı aşan test olmadı. Bu, sistemin güvenli olduğu anlamı
 
 | Devreye giren katman | Test |
 |---|---|
-| K1d — zehirli doküman düşürüldü | 18 |
+| K1d — zehirli doküman temizlendi/düşürüldü | 18 |
 | K1 — girdi kontrolü | 13 |
-| K2 — araç yetkilendirmesi | 7 |
-| K1d — zehirli doküman düşürüldü + K2 — araç yetkilendirmesi | 6 |
-| engellenmedi (model zaten sızdırmadı) | 1 |
+| K1d — zehirli doküman temizlendi/düşürüldü + K2 — araç yetkilendirmesi | 6 |
+| K2 — araç yetkilendirmesi | 5 |
+| engellenmedi (model zaten sızdırmadı) | 3 |
 
 Sonuç tek bir katmandan gelmiyor. Saldırıların bir kısmı girdide, bir kısmı zehirli doküman
 düşürülerek, bir kısmı da araç yetkilendirmesinde duruyor — yani K1 aşılsa bile K2 arkada duruyor.
@@ -62,11 +62,15 @@ düşürülerek, bir kısmı da araç yetkilendirmesinde duruyor — yani K1 aş
 | | Savunmalı | Zafiyetli |
 |---|---|---|
 | Yanlış pozitif | **0/5** | 0/5 |
-| Ortalama gecikme | 4677 ms | 3584 ms |
-| Savunma maliyeti | **+1093 ms / istek** | |
+| Ortalama gecikme | 1993 ms | 2179 ms |
+| Fark | -186 ms — **ölçüm gürültüsü içinde, savunma maliyeti sayılmaz** | |
 
 Limit içindeki meşru para iadeleri geçiyor (`acme-destek` 3.100 TL ≤ 5.000, `finans-muduru`
 12.400 TL ≤ 100.000). Savunma parayı durdurmuyor — **yetkisiz** parayı durduruyor.
+Gecikme sayıları yalnızca 5 isteğe dayanıyor ve makine yüküne çok duyarlı — iki koşu
+farklı zamanlarda yapıldığında fark işaret bile değiştirebiliyor (bir ölçümde +1093 ms,
+diğerinde −186 ms). Savunmanın teorik maliyeti K1'deki ikinci LLM çağrısıdır; güvenilir
+bir sayı için iki hedefin dönüşümlü ve çok daha fazla istekle ölçülmesi gerekir.
 `node attacks/legit.js` ile tekrar üretilir.
 
 ## Okuma notu

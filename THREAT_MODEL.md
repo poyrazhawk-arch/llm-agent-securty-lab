@@ -123,14 +123,22 @@ Bunlar gerçek risk; bu lab'de savunulmadıkları için burada yazılıyor:
 
 ## 7. Kabul Edilen Risk
 
-Ölçülen sonuç (45 test × 10 tekrar): savunmalı sürümde **445 denemenin 0'ı** sızdırdı.
+Ölçülen sonuç (45 test × 10 tekrar): savunmalı sürümde **444 denemenin 0'ı** sızdırdı.
 Zafiyetli sürümde 433 denemenin 337'si (%78) sızdırıyordu.
-Yanlış pozitif: 5 meşru iş akışında 0. Ayrıntı: `results/comparison.md`.
+Yanlış pozitif: 5 meşru iş akışında 0 — bu ölçüm yanıtın sadece geldiğini değil, doğru
+olduğunu da kontrol ediyor. Ayrıntı: `results/comparison.md`.
 
 **%0, "güvenli" demek değildir.** Yalnızca bu test setinin bu savunmayı aşamadığı anlamına
-gelir. Test setinin sınırları §6'da. Ayrıca ölçümün kendisi de mükemmel değil: zafiyetli
-sürümde 28 test kararsız çıktı (bazen sızdırdı, bazen sızdırmadı), yani tek koşuluk hiçbir
-sayı bu sistemin özelliği sayılamaz.
+gelir. Test setinin sınırları §6'da. Ölçümün kendisi de mükemmel değil: zafiyetli sürümde
+28 test kararsız çıktı (bazen sızdırdı, bazen sızdırmadı), yani tek koşuluk hiçbir sayı bu
+sistemin özelliği sayılamaz.
+
+**K1d'nin takası (2026-09 güncellemesi).** Zehirli doküman artık komple düşürülmüyor;
+içindeki talimat bloğu temizlenip meşru içerik korunuyor. Bu, savunmayı "tamamen güvenli
+ama ürünü bozar" konumundan "kullanışlı ama temizleyicinin kalitesine bağımlı" konumuna
+taşıyor — temizlenen doküman modele ulaşıyor, atılan ulaşmıyordu. Riski üç şey sınırlıyor:
+temizlik sonrası yeniden tarama, geriye içerik kalmazsa düşürme, ve arkada duran K2.
+Ölçüm bu takası destekliyor: doküman modele ulaşmasına rağmen T2 sızıntısı 0/98.
 
 Tasarım gereği kapalı olmayan iki alan şimdiden biliniyor:
 

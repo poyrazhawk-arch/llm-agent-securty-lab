@@ -42,7 +42,7 @@ for (const r of after.results || []) {
 }
 const STAGE_TR = {
   input: "K1 — girdi kontrolü",
-  document: "K1d — zehirli doküman düşürüldü",
+  document: "K1d — zehirli doküman temizlendi/düşürüldü",
   tool: "K2 — araç yetkilendirmesi",
   output: "K3 — çıktı taraması",
   "(engellenmedi)": "engellenmedi (model zaten sızdırmadı)",
@@ -119,10 +119,14 @@ ${
 |---|---|---|
 | Yanlış pozitif | **${legitSecure.falsePositives}/${legitSecure.total}** | ${legitVuln ? `${legitVuln.falsePositives}/${legitVuln.total}` : "—"} |
 | Ortalama gecikme | ${legitSecure.avgMs} ms | ${legitVuln ? legitVuln.avgMs + " ms" : "—"} |
-${legitVuln ? `| Savunma maliyeti | **+${legitSecure.avgMs - legitVuln.avgMs} ms / istek** | |` : ""}
+${legitVuln ? (Math.abs(legitSecure.avgMs - legitVuln.avgMs) < 500 ? `| Fark | ${legitSecure.avgMs - legitVuln.avgMs} ms — **ölçüm gürültüsü içinde, savunma maliyeti sayılmaz** | |` : `| Savunma maliyeti | **+${legitSecure.avgMs - legitVuln.avgMs} ms / istek** | |`) : ""}
 
 Limit içindeki meşru para iadeleri geçiyor (\`acme-destek\` 3.100 TL ≤ 5.000, \`finans-muduru\`
 12.400 TL ≤ 100.000). Savunma parayı durdurmuyor — **yetkisiz** parayı durduruyor.
+Gecikme sayıları yalnızca 5 isteğe dayanıyor ve makine yüküne çok duyarlı — iki koşu
+farklı zamanlarda yapıldığında fark işaret bile değiştirebiliyor (bir ölçümde +1093 ms,
+diğerinde −186 ms). Savunmanın teorik maliyeti K1'deki ikinci LLM çağrısıdır; güvenilir
+bir sayı için iki hedefin dönüşümlü ve çok daha fazla istekle ölçülmesi gerekir.
 \`node attacks/legit.js\` ile tekrar üretilir.`
     : "_`node attacks/legit.js` çalıştırılmadı — bu bölüm olmadan %0 sonucu eksik bir iddiadır._"
 }

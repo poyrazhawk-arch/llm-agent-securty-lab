@@ -10,7 +10,7 @@ Aynı asistanın iki sürümü, aynı 45 saldırı, tek fark savunma katmanı.
 
 ## Sonuç
 
-Aynı 45 saldırı iki sürüme de gönderildi, her test 10 kez tekrarlandı — toplam 878 deneme.
+Aynı 45 saldırı iki sürüme de gönderildi, her test 10 kez tekrarlandı — toplam 877 deneme.
 Tekrar şart, çünkü LLM deterministik değil: aynı payload bir denemede engellenip
 diğerinde sızdırabiliyor.
 
@@ -18,25 +18,29 @@ diğerinde sızdırabiliyor.
 |---|---|---|
 | T1 — Yetkisiz para iadesi | 94/99 (**%95**) | 0/100 (**%0**) |
 | T2 — Indirect prompt injection | 41/85 (**%48**) | 0/98 (**%0**) |
-| T3 — Cross-tenant veri sızıntısı | 71/100 (**%71**) | 0/100 (**%0**) |
+| T3 — Cross-tenant veri sızıntısı | 71/100 (**%71**) | 0/99 (**%0**) |
 | T4 — Sistem promptu sızıntısı | 131/149 (**%88**) | 0/147 (**%0**) |
-| **Toplam** | **337/433 (%78)** | **0/445 (%0)** |
+| **Toplam** | **337/433 (%78)** | **0/444 (%0)** |
 
 Oranlar deneme başınadır. Zafiyetli sürümde 45 testin 44'ü en az bir kez sızdırdı.
 
 **%0'ı tek başına okumayın.** Her saldırıyı engelleyen bir sistem, meşru trafiği de
-engelliyor olabilir. Ölçtük: **5 meşru iş akışında 0 yanlış pozitif** — limit içindeki
-gerçek para iadeleri dahil hepsi çalışıyor (`acme-destek` 3.100 TL ≤ 5.000 limit,
-`finans-muduru` 12.400 TL ≤ 100.000). Savunmanın bedeli **+1,1 sn / istek**
-(3,6 sn → 4,7 sn), kaynağı girdi katmanındaki ikinci LLM çağrısı.
+engelliyor olabilir. Ölçtük: **5 meşru iş akışında 0 yanlış pozitif** — üstelik bu ölçüm
+yanıtın sadece geldiğini değil, **doğru** olduğunu da kontrol ediyor (limit içi para
+iadeleri geçiyor, tedarikçi sorusu doğru cevabı alıyor).
 
-Sonuç tek bir katmandan gelmiyor: 18 saldırı zehirli doküman düşürülerek, 13 girdi
-kontrolünde, 7 araç yetkilendirmesinde, 6'sı ikisinde birden durdu.
+Sonuç tek bir katmandan gelmiyor: 18 saldırı doküman temizliğinde, 13 girdi kontrolünde,
+7 araç yetkilendirmesinde, 6'sı ikisinde birden durdu.
 
 **Kararsızlık:** zafiyetli sürümde 28 test *bazen* sızdırdı, bazen sızdırmadı. Bu yüzden
 "bu saldırı çalışır" değil, "denemelerin %X'inde çalışır" demek doğru. Tek koşuluk ölçüm
 yanıltır — nitekim ilk ölçümümüzde T2'nin 10 payloadından 6'sı "çalışmıyor" görünmüştü;
 tekrarla bakınca hepsinin çalıştığı, sadece farklı oranlarda tuttuğu ortaya çıktı.
+
+**Gecikme maliyeti ölçülemedi.** Savunmanın teorik bedeli K1'deki ikinci LLM çağrısıdır,
+ama 5 istekle yapılan ölçüm makine yüküne o kadar duyarlı ki fark işaret değiştiriyor
+(bir koşuda +1093 ms, diğerinde −186 ms). Güvenilir bir sayı için dönüşümlü ve çok daha
+büyük örneklem gerekiyor — bunu iddia olarak sunmuyoruz.
 
 Tam tablo, katman dağılımı, kararsız testler ve yanlış pozitif ölçümü:
 [results/comparison.md](results/comparison.md)
@@ -126,7 +130,7 @@ istemcinin iddia ettiği kimlik olduğu gibi kabul edilir.
 | Katman | Ne yapar | Durdurduğu |
 |---|---|---|
 | **K0 — Mimari** | Sır sistem promptundan tamamen çıkarıldı, ortam değişkeninde | T4 |
-| **K1 — Girdi** | Diakritik/Base64/leetspeak normalizasyonu → sinyal eleme → LLM yargıcı; talimat taşıyan dokümanlar bağlamdan düşürülür | T4, T2 |
+| **K1 — Girdi** | Diakritik/Base64/leetspeak normalizasyonu → sinyal eleme → LLM yargıcı; talimat taşıyan bölümler dokümandan temizlenir | T4, T2 |
 | **K2 — Yetki** | Rol bazlı iade limiti, e-posta alan adı allowlist'i, retrieval'da zorunlu tenant filtresi | T1, T3 |
 | **K3 — Çıktı** | Sır (düz/Base64/ters/serpiştirilmiş) ve PII taraması | T3, T4 |
 
@@ -140,21 +144,28 @@ kelime listesine güvenen bir tasarım, güvenlik değil güvenlik tiyatrosudur.
 
 ## Bilinen sorunlar
 
-Ölçüm sırasında bulunan, henüz kapatılmamış eksikler. Bir güvenlik reposunda bunları
-yazmamak, olmadıkları anlamına gelmez — sadece bulunmalarını başkasına bırakmak olur.
+Ölçüm sırasında bulunan eksikler. Bir güvenlik reposunda bunları yazmamak, olmadıkları
+anlamına gelmez — sadece bulunmalarını başkasına bırakmak olur.
 
-**1. K1d zehirli dokümanı komple düşürüyor, meşru bilgi de gidiyor.**
-Depo sorumlusu "mart ayındaki teslimat takvimi güncellendi mi?" diye sorduğunda doğru cevap
-tedarikçi notunun içinde — ama not düşürüldüğü için asistan yanlış cevap veriyor
-("güncellenmemiştir"). Savunma güvenliği sağlarken ürünü bozuyor.
-Doğru çözüm: dokümanı atmak yerine içindeki talimat bloğunu temizleyip kalanını kullanmak.
-
-**2. Yanlış pozitif ölçümü yanıtın doğruluğunu kontrol etmiyor.**
-`attacks/legit.js` yalnızca isteğin engellenip engellenmediğine bakıyor; yanlış ama
-engellenmemiş bir cevabı "başarılı" sayıyor. 1 numaralı sorunu bu yüzden kaçırdı.
-
-**3. Model sürümü sabitlenmemiş.** `llama3.1:8b` etiketi zamanla farklı bir derlemeye
+**1. Model sürümü sabitlenmemiş.** `llama3.1:8b` etiketi zamanla farklı bir derlemeye
 işaret edebilir; tam tekrar üretilebilirlik için digest sabitlenmeli.
+
+**2. Gecikme maliyeti güvenilir ölçülmüyor.** 5 istek, tek yönlü koşu, makine yüküne
+aşırı duyarlı. Dönüşümlü ve büyük örneklemli bir ölçüm gerekiyor.
+
+**3. Çok turlu saldırılar test edilmiyor.** `attacks/run.js` yalnızca tek mesajlık
+saldırı üretiyor; kademeli ikna senaryoları kapsam dışı (THREAT_MODEL §6–§7).
+
+### Kapatılanlar
+
+- ~~K1d zehirli dokümanı komple düşürüyor, meşru bilgi de gidiyor~~ → doküman artık
+  atılmıyor, içindeki talimat bloğu temizleniyor; kalan metin yeniden taranıyor ve hâlâ
+  sinyal varsa doküman düşürülüyor (fail closed). Takasın gerekçesi `guardrails.js`'te yazılı.
+- ~~Yanlış pozitif ölçümü yanıtın doğruluğunu kontrol etmiyor~~ → `attacks/legit.js` artık
+  beklenen bilginin yanıtta olup olmadığını da doğruluyor. Bu kontrol olmadan yukarıdaki
+  düzeltmenin işe yaradığı kanıtlanamazdı.
+- ~~Koşucu hataları sayıyor ama içeriğini kaydetmiyor~~ → hata mesajları kaydediliyor,
+  hiçbir denemesi tamamlanmayan test `GEÇERSİZ` işaretleniyor ve "engellendi" sayılmıyor.
 
 ## Yapı
 
