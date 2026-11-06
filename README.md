@@ -8,6 +8,35 @@ Aynı asistanın iki sürümü, aynı 45 saldırı, tek fark savunma katmanı.
 
 **Önce oku:** [THREAT_MODEL.md](THREAT_MODEL.md) — neyi savunduğumuz ve neyi savunmadığımız.
 
+<details>
+<summary><b>English summary</b></summary>
+
+A local lab that **measures** how a tool-using LLM agent gets compromised and how it is defended.
+The target is an internal e-commerce support assistant that reads order records via RAG, issues
+refunds and sends email. It ships in two versions with identical capabilities: a deliberately
+vulnerable one and one with layered defenses. Both receive the same attack set; the output is a
+before/after comparison.
+
+- **Threats:** unauthorized refunds (excessive agency), indirect prompt injection via a poisoned
+  document, cross-tenant data leakage, system prompt / secret leakage. See [THREAT_MODEL.md](THREAT_MODEL.md),
+  which also lists what is explicitly *not* defended.
+- **Defense layers:** K0 secret removed from the prompt (architecture) · K1 input checks and
+  poisoned-document sanitizing · K2 role-based refund limits, email allowlist, tenant-filtered
+  retrieval · K3 output scanning and PII masking.
+- **Success is judged by system state, not by what the model says:** an attack counts only if a
+  refund record was actually created, an email actually went out, or the secret actually appeared
+  in the output (plain, Base64 or reversed).
+- **Every test is repeated**, because LLMs are non-deterministic, and **false positives are measured**
+  too: a defense that blocks legitimate work is not a result.
+
+Measured results are in the table below and in [results/comparison.md](results/comparison.md).
+They hold only for this test set, this model (`llama3.1:8b` via Ollama) and this lab. A blocked
+attack set is **not** a security guarantee.
+
+Run it with `docker compose up` (vulnerable on `:3000`, defended on `:3001`). Zero npm dependencies.
+
+</details>
+
 ## Sonuç
 
 Aynı 45 saldırı iki sürüme de gönderildi, her test 10 kez tekrarlandı — toplam 877 deneme.
@@ -185,3 +214,9 @@ results/
 ```
 
 Sıfır npm bağımlılığı — Node 20+ yeterli.
+
+## İletişim
+
+Bu yöntemi kendi LLM ajanınıza uygulamak veya sonuçları konuşmak için:
+[GitHub üzerinden ulaşın](https://github.com/poyrazhawk-arch) ya da bu repoda bir issue açın.
+*To apply this method to your own LLM agent, reach out via [GitHub](https://github.com/poyrazhawk-arch) or open an issue.*
